@@ -655,7 +655,7 @@
             typingIndicator.classList.add('active');
             scrollToBottom();
 
-            try { const response = await fetch('/api/chat.js', {
+            try { const response = await fetch('/chat.js', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -773,3 +773,4 @@
 </body>
 
 </html>
+
