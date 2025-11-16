@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StylistAI - Your Personal Fashion Intelligence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8B5CF6;
+            --primary-dark: #7C3AED;
+            --secondary: #EC4899;
+            --bg-dark: #0F172A;
+            --bg-darker: #020617;
+            --bg-card: #1E293B;
+            --text-primary: #F8FAFC;
+            --text-secondary: #CBD5E1;
+            --border: #334155;
+            --success: #10B981;
+            --warning: #F59E0B;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.1;
+            background: 
+                radial-gradient(circle at 20% 50%, var(--primary) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--secondary) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        /* Main Chat Container */
+        .chat-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (min-width: 768px) {
+            .chat-container {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        /* Chat Area */
+        .chat-box {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chat-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Messages */
+        .messages {
+            height: 450px;
+            overflow-y: auto;
+            padding: 15px;
+            margin-bottom: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: var(--bg-darker);
+            border-radius: 10px;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message-ai {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .message-user .message-content {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-ai .message-content {
+            background: var(--bg-darker);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            padding: 12px 18px;
+            background: var(--bg-darker);
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            animation: typing 1.4s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        /* Input Area */
+        .input-area {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 25px;
+            border: 1px solid var(--border);
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #userInput:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--bg-darker);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quick-action {
+            padding: 12px;
+            background: var(--bg-darker);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .quick-action:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Voice Control */
+        .voice-control {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .voice-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            background: var(--bg-darker);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .voice-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .voice-btn.recording {
+            animation: recordPulse 1.5s ease-in-out infinite;
+            background: var(--secondary);
+        }
+
+        @keyframes recordPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(236, 72, 153, 0); }
+        }
+
+        /* Product Recommendations */
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .product-card {
+            background: var(--bg-darker);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 120px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .product-name {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .product-price {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2rem;
+            }
+
+            .messages {
+                height: 350px;
+            }
+
+            .chat-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-primary:disabled .spinner {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <div class="container">
+        <header>
+            <h1 class="logo">StylistAI</h1>
+            <p class="tagline">Your Personal Fashion Intelligence • Powered by AI</p>
+        </header>
+
+        <div class="chat-container">
+            <!-- Main Chat Area -->
+            <div class="chat-box">
+                <div class="chat-header">
+                    <h2 class="chat-title">Chat with Your Stylist</h2>
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span>Online</span>
+                    </div>
+                </div>
+
+                <div class="messages" id="messages">
+                    <div class="message message-ai">
+                        <div class="message-content">
+                            👋 Hi! I'm StylistAI, your personal fashion companion. Tell me about the occasion you're styling for, or how you want to feel today!
+                            <br><br>
+                            💬 Try: "I have a job interview tomorrow" or "Necesito un outfit para una cena romántica"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+
+                <div class="input-area">
+                    <input 
+                        type="text" 
+                        id="userInput" 
+                        placeholder="Describe your occasion, mood, or what you need..."
+                        autocomplete="off"
+                    />
+                    <button class="btn btn-primary" id="sendBtn">
+                        <span id="btnText">Send</span>
+                        <div class="spinner"></div>
+                    </button>
+                </div>
+
+                <div class="voice-control">
+                    <button class="voice-btn" id="voiceBtn" title="Click to speak">
+                        🎤
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-title">
+                        ⚡ Quick Start
+                    </div>
+                    <div class="quick-action" data-prompt="I have a job interview tomorrow and I'm nervous">
+                        💼 Job Interview
+                    </div>
+                    <div class="quick-action" data-prompt="Necesito un outfit para una cita romántica">
+                        💕 Romantic Date
+                    </div>
+                    <div class="quick-action" data-prompt="What should I wear to a summer wedding?">
+                        🌸 Wedding Guest
+                    </div>
+                    <div class="quick-action" data-prompt="I need a casual weekend outfit">
+                        ☕ Casual Weekend
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="card">
+                    <div class="card-title">
+                        ✨ What I Can Do
+                    </div>
+                    <ul class="feature-list">
+                        <li>Color analysis & matching</li>
+                        <li>Body-type aware styling</li>
+                        <li>Occasion-based looks</li>
+                        <li>Budget-friendly options</li>
+                        <li>Emotional intelligence</li>
+                        <li>Bilingual (EN/ES)</li>
+                    </ul>
+                </div>
+
+                <!-- Products Placeholder -->
+                <div class="card" id="productsContainer" style="display: none;">
+                    <div class="card-title">
+                        🛍️ Recommended Items
+                    </div>
+                    <div class="products" id="products">
+                        <!-- Products will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const messagesDiv = document.getElementById('messages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const btnText = document.getElementById('btnText');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const quickActions = document.querySelectorAll('.quick-action');
+        const productsContainer = document.getElementById('productsContainer');
+        const productsDiv = document.getElementById('products');
+
+        // State
+        let isRecording = false;
+        let isSending = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            userInput.focus();
+            setupEventListeners();
+        });
+
+        // Event Listeners
+        function setupEventListeners() {
+            sendBtn.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            voiceBtn.addEventListener('click', toggleVoiceRecording);
+
+            quickActions.forEach(action => {
+                action.addEventListener('click', () => {
+                    const prompt = action.getAttribute('data-prompt');
+                    userInput.value = prompt;
+                    sendMessage();
+                });
+            });
+        }
+
+        // Send Message
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message || isSending) return;
+
+            isSending = true;
+            sendBtn.disabled = true;
+            btnText.textContent = '';
+
+            // Add user message
+            addMessage(message, 'user');
+            userInput.value = '';
+
+            // Show typing indicator
+            typingIndicator.classList.add('active');
+            scrollToBottom();
+
+            try {
+                // Call API
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const data = await response.json();
+
+                // Hide typing indicator
+                typingIndicator.classList.remove('active');
+
+                // Add AI response
+                addMessage(data.response, 'ai');
+
+                // Show products if available
+                if (data.products && data.products.length > 0) {
+                    displayProducts(data.products);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                typingIndicator.classList.remove('active');
+                addMessage('Sorry, I encountered an error. Please try again.', 'ai');
+            } finally {
+                isSending = false;
+                sendBtn.disabled = false;
+                btnText.textContent = 'Send';
+                userInput.focus();
+            }
+        }
+
+        // Add Message to Chat
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            
+            scrollToBottom();
+        }
+
+        // Scroll to Bottom
+        function scrollToBottom() {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Voice Recording (Placeholder)
+        function toggleVoiceRecording() {
+            if (!isRecording) {
+                // Start recording
+                isRecording = true;
+                voiceBtn.classList.add('recording');
+                voiceBtn.textContent = '⏹️';
+                
+                // Placeholder: In production, implement Web Speech API or Whisper
+                setTimeout(() => {
+                    stopVoiceRecording();
+                    userInput.value = "Voice recording feature coming soon!";
+                }, 2000);
+            } else {
+                stopVoiceRecording();
+            }
+        }
+
+        function stopVoiceRecording() {
+            isRecording = false;
+            voiceBtn.classList.remove('recording');
+            voiceBtn.textContent = '🎤';
+        }
+
+        // Display Products
+        function displayProducts(products) {
+            productsDiv.innerHTML = '';
+            
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.innerHTML = `
+                    <div class="product-image">${product.emoji || '👗'}</div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">$${product.price}</div>
+                `;
+                
+                productCard.addEventListener('click', () => {
+                    if (product.link) {
+                        window.open(product.link, '_blank');
+                    }
+                });
+                
+                productsDiv.appendChild(productCard);
+            });
+            
+            productsContainer.style.display = 'block';
+        }
+
+        // Handle Enter key for better UX
+        userInput.addEventListener('input', () => {
+            if (userInput.value.trim()) {
+                sendBtn.style.background = 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)';
+            } else {
+                sendBtn.style.background = '';
+            }
+        });
+    </script>
+</body>
+</html>
