@@ -1,168 +1,31 @@
-// /api/chat.js - Main conversation endpoint for StylistAI
-
-export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  try {
-    const { message } = req.body;
-
-    if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Message is required' });
-    }
-
-    // OpenAI API Key from environment variables
-    const apiKey = process.env.OPENAI_API_KEY;
-    
-    if (!apiKey) {
-      console.error('OPENAI_API_KEY not found in environment variables');
-      return res.status(500).json({ 
-        error: 'API configuration error',
-        response: "I'm currently being configured. Please try again in a moment! 🔧"
-      });
-    }
-
-    // System prompt for StylistAI
-    const systemPrompt = `You are StylistAI, a bilingual (English-Spanish) conversational fashion stylist with emotional intelligence.
-
-YOUR CORE IDENTITY:
-- You help people discover their authentic style through empathetic conversation
-- You analyze skin tone, hair color, body type, occasion, mood, and budget
-- You provide personalized outfit recommendations with color reasoning
-- You're warm, supportive, never prescriptive, and always inclusive
-
-CONVERSATION APPROACH:
-1. Start by understanding the occasion and how they want to feel
-2. Gather context naturally: skin tone (warm/cool/neutral), hair color, body preferences
-3. Consider mood, budget, climate, and cultural context
-4. Recommend specific pieces with clear reasoning
-5. Explain WHY colors and styles work for them
-
-COMMUNICATION STYLE:
-- Warm and curious: "Tell me more about..."
-- Supportive: "Here's what might work beautifully for you"
-- Collaborative: "Let's explore together"
-- Emotionally validating: "That makes complete sense"
-- Bilingual: Respond in the language the user uses
-
-AVOID:
-- Fashion jargon without explanation
-- Body criticism (never "hide" - always "balance" or "highlight")
-- Trend-pushing ("This is so in!")
-- Budget assumptions
-- Gendered assumptions
-
-PRODUCT RECOMMENDATIONS:
-When suggesting items, structure your response like this:
-"Based on [reasoning], I recommend:
-• [Item 1]: [Why it works]
-• [Item 2]: [Why it works]
-• [Item 3]: [Why it works]
-
-These items would be available on Amazon. Would you like me to help you find specific pieces?"
-
-Remember: Your goal is to make users feel confident, understood, and excited about their style choices.`;
-
-    // Call OpenAI API
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4-turbo-preview', // or 'gpt-3.5-turbo' for lower cost
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
-        ],
-        temperature: 0.8,
-        max_tokens: 800,
-        presence_penalty: 0.6,
-        frequency_penalty: 0.3
-      })
-    });
-
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.json();
-      console.error('OpenAI API Error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await openaiResponse.json();
-    const aiResponse = data.choices[0].message.content;
-
-    // Parse potential product recommendations from response
-    const products = extractProducts(aiResponse);
-
-    return res.status(200).json({
-      response: aiResponse,
-      products: products.length > 0 ? products : null,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Chat API Error:', error);
-    return res.status(500).json({
-      error: 'Internal server error',
-      response: "I'm having trouble connecting right now. Please try again! 💫",
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+{
+  "name": "stylist-ai",
+  "version": "1.0.0",
+  "description": "AI-powered fashion stylist with emotional intelligence",
+  "main": "api/chat.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "ai",
+    "fashion",
+    "stylist",
+    "ecommerce",
+    "openai",
+    "vercel"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
-
-// Helper function to extract product mentions from AI response
-function extractProducts(text) {
-  const products = [];
-  
-  // Look for bullet points with items
-  const bulletPattern = /[•\-\*]\s*([^:]+):\s*([^\n]+)/g;
-  let match;
-  
-  while ((match = bulletPattern.exec(text)) !== null) {
-    const itemName = match[1].trim();
-    const description = match[2].trim();
-    
-    // Try to extract price if mentioned
-    const priceMatch = description.match(/\$(\d+)/);
-    
-    products.push({
-      name: itemName,
-      description: description,
-      price: priceMatch ? parseInt(priceMatch[1]) : null,
-      emoji: getEmojiForItem(itemName),
-      link: null // In production, this would be a real Amazon affiliate link
-    });
-  }
-  
-  return products.slice(0, 4); // Limit to 4 products
-}
-
-// Helper function to assign emoji based on item type
-function getEmojiForItem(itemName) {
-  const name = itemName.toLowerCase();
-  
-  if (name.includes('dress')) return '👗';
-  if (name.includes('blazer') || name.includes('jacket')) return '🧥';
-  if (name.includes('pants') || name.includes('trousers') || name.includes('jeans')) return '👖';
-  if (name.includes('shirt') || name.includes('blouse') || name.includes('top')) return '👔';
-  if (name.includes('shoes') || name.includes('heels') || name.includes('sneakers')) return '👠';
-  if (name.includes('bag') || name.includes('purse')) return '👜';
-  if (name.includes('jewelry') || name.includes('necklace') || name.includes('earrings')) return '💎';
-  if (name.includes('skirt')) return '🩱';
-  if (name.includes('sweater') || name.includes('cardigan')) return '🧶';
   
   return '✨'; // Default emoji
 }
+
